@@ -1,0 +1,3 @@
+nginx/templates/default.conf.template=ours
+issue-letsencrypt.sh=ours
+renew-letsencrypt.sh=ours

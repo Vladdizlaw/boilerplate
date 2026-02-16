@@ -1,0 +1,96 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_URL")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum Communication {
+  email
+  phone
+}
+
+model User {
+  id                 Int                @id @default(autoincrement())
+  email              String             @unique
+  password_hash      String?
+  role               UserRole           @default(USER)
+  provider           String?
+  provider_id        String?
+  created_at         DateTime           @default(now()) @db.Timestamptz(3)
+  updated_at         DateTime           @updatedAt @db.Timestamptz(3)
+  deleted_at         DateTime?
+  attachment         Attachment[]
+  profile            UserProfile?
+  user_agreements    UserAgreements?
+  user_confirmations UserConfirmations?
+
+  @@index([email])
+  @@map("users")
+}
+
+model UserConfirmations {
+  id      Int     @id @default(autoincrement())
+  user    User    @relation(fields: [user_id], references: [id])
+  user_id Int     @unique
+  email   Boolean @default(false)
+  phone   Boolean @default(false)
+
+  @@index([user_id])
+  @@map("user_confirmations")
+}
+
+model UserAgreements {
+  id                     Int      @id @default(autoincrement())
+  user                   User     @relation(fields: [user_id], references: [id])
+  user_id                Int      @unique
+  terms_and_conditions   Boolean
+  updates_and_promotions Boolean?
+
+  @@index([user_id])
+  @@map("user_agreements")
+}
+
+model UserProfile {
+  id           Int     @id @default(autoincrement())
+  first_name   String?
+  last_name    String?
+  phone        String?
+  company_name String
+  user         User    @relation(fields: [user_id], references: [id])
+  user_id      Int     @unique
+
+  @@index([user_id])
+  @@map("user_profiles")
+}
+
+model Attachment {
+  id                 Int      @id @default(autoincrement())
+  original_file_name String
+  file_name          String
+  file_type          String
+  path               String
+  resource_id        Int?
+  resource           String
+  user               User     @relation(fields: [user_id], references: [id])
+  user_id            Int
+  created_at         DateTime @default(now()) @db.Timestamptz(3)
+  updated_at         DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([user_id, resource, resource_id])
+  @@map("attachments")
+}
